@@ -14,11 +14,11 @@ struct KeyEvent {
 fn keycode_to_string(key: &Keycode) -> String {
     match key {
         // Modifiers
-        Keycode::LAlt | Keycode::RAlt => "Alt".to_string(),
-        Keycode::LShift | Keycode::RShift => "Shift".to_string(),
-        Keycode::LControl | Keycode::RControl => "Ctrl".to_string(),
+        Keycode::LAlt | Keycode::RAlt => "⌥".to_string(),
+        Keycode::LShift | Keycode::RShift => "⇧".to_string(),
+        Keycode::LControl | Keycode::RControl => "⌃".to_string(),
         Keycode::LMeta | Keycode::RMeta => "⌘".to_string(),
-        Keycode::CapsLock => "Caps".to_string(),
+        Keycode::CapsLock => "⇪".to_string(),
 
         // Function keys
         Keycode::F1 => "F1".to_string(),
@@ -123,7 +123,15 @@ fn keycode_to_string(key: &Keycode) -> String {
         Keycode::NumpadDivide => "Num/".to_string(),
         Keycode::NumpadEnter => "NumEnter".to_string(),
 
-        _ => format!("{:?}", key),
+        _ => {
+            let debug_name = format!("{:?}", key);
+            // Handle macOS-specific key names
+            match debug_name.as_str() {
+                "Command" | "LCommand" | "RCommand" => "⌘".to_string(),
+                "LOption" | "ROption" | "Option" => "⌥".to_string(),
+                _ => debug_name,
+            }
+        }
     }
 }
 

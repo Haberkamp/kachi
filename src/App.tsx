@@ -13,7 +13,7 @@ interface DisplayKey {
   timestamp: number;
 }
 
-const MODIFIERS = ["⌘", "Ctrl", "Alt", "Shift", "AltGr"];
+const MODIFIERS = ["⌘", "⌃", "⌥", "⇧"];
 const FADE_DELAY = 2000;
 
 function App() {
@@ -68,7 +68,7 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const modifierOrder = ["Ctrl", "Alt", "Shift", "⌘"];
+  const modifierOrder = ["⌃", "⌥", "⇧", "⌘"];
   const sortedModifiers = modifierOrder.filter((m) => activeModifiers.has(m));
 
   const hasContent = sortedModifiers.length > 0 || recentKeys.length > 0;
