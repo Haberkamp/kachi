@@ -71,33 +71,37 @@ function App() {
   const modifierOrder = ["Ctrl", "Alt", "Shift", "⌘"];
   const sortedModifiers = modifierOrder.filter((m) => activeModifiers.has(m));
 
+  const hasContent = sortedModifiers.length > 0 || recentKeys.length > 0;
+
   return (
     <div className="container" data-tauri-drag-region>
-      <div className="key-display">
-        {sortedModifiers.map((mod) => (
-          <span key={mod} className="key modifier">
-            {mod}
-          </span>
-        ))}
-        {sortedModifiers.length > 0 && recentKeys.length > 0 && (
-          <span className="plus">+</span>
-        )}
-        {recentKeys.map((k, index) => (
-          <span
-            key={k.id}
-            className="key"
-            style={{
-              animationDelay: `${index * 30}ms`,
-              opacity: Math.max(
-                0,
-                1 - (Date.now() - k.timestamp) / FADE_DELAY
-              ),
-            }}
-          >
-            {k.key}
-          </span>
-        ))}
-      </div>
+      {hasContent && (
+        <div className="key-display">
+          {sortedModifiers.map((mod) => (
+            <span key={mod} className="key modifier">
+              {mod}
+            </span>
+          ))}
+          {sortedModifiers.length > 0 && recentKeys.length > 0 && (
+            <span className="plus">+</span>
+          )}
+          {recentKeys.map((k, index) => (
+            <span
+              key={k.id}
+              className="key"
+              style={{
+                animationDelay: `${index * 30}ms`,
+                opacity: Math.max(
+                  0,
+                  1 - (Date.now() - k.timestamp) / FADE_DELAY
+                ),
+              }}
+            >
+              {k.key}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
