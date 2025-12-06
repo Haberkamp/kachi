@@ -1,5 +1,11 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useLayoutEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
+import {
+  getCurrentWindow,
+  currentMonitor,
+  LogicalSize,
+  PhysicalPosition,
+} from "@tauri-apps/api/window";
 import "./App.css";
 
 interface KeyEvent {
@@ -16,12 +22,17 @@ interface DisplayKey {
 const MODIFIERS = ["⌘", "⌃", "⌥", "⇧"];
 const FADE_DELAY = 2000;
 
+const MIN_WIDTH = 100;
+const PADDING = 32; // container padding
+const WINDOW_HEIGHT = 150;
+
 function App() {
   const [activeModifiers, setActiveModifiers] = useState<Set<string>>(
     new Set()
   );
   const [recentKeys, setRecentKeys] = useState<DisplayKey[]>([]);
   const keyIdRef = useRef(0);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const addKey = useCallback((key: string) => {
     const newKey: DisplayKey = {
@@ -68,6 +79,35 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Resize window based on content
+  useLayoutEffect(() => {
+    const resizeWindow = async () => {
+      const appWindow = getCurrentWindow();
+      const monitor = await currentMonitor();
+      if (!monitor) return;
+
+      const contentWidth = contentRef.current?.offsetWidth ?? 0;
+      const newWidth = Math.max(MIN_WIDTH, contentWidth + PADDING * 2);
+
+      const screenWidth = monitor.size.width;
+      const screenX = monitor.position.x;
+      const scaleFactor = monitor.scaleFactor;
+      const paddingBottom = 40 * scaleFactor;
+
+      const x = screenX + (screenWidth - newWidth * scaleFactor) / 2;
+      const y =
+        monitor.position.y +
+        monitor.size.height -
+        WINDOW_HEIGHT * scaleFactor -
+        paddingBottom;
+
+      await appWindow.setSize(new LogicalSize(newWidth, WINDOW_HEIGHT));
+      await appWindow.setPosition(new PhysicalPosition(Math.round(x), Math.round(y)));
+    };
+
+    resizeWindow();
+  }, [activeModifiers, recentKeys]);
+
   const modifierOrder = ["⌃", "⌥", "⇧", "⌘"];
   const sortedModifiers = modifierOrder.filter((m) => activeModifiers.has(m));
 
@@ -76,7 +116,7 @@ function App() {
   return (
     <div className="container" data-tauri-drag-region>
       {hasContent && (
-        <div className="key-display">
+        <div className="key-display" ref={contentRef}>
           {sortedModifiers.map((mod) => (
             <span key={mod} className="key modifier">
               {mod}
