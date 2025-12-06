@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::collections::HashSet;
 use std::thread;
 use std::time::Duration;
-use tauri::Emitter;
+use tauri::{Emitter, Manager, PhysicalPosition};
 
 #[derive(Clone, Serialize)]
 struct KeyEvent {
@@ -141,6 +141,25 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let app_handle = app.handle().clone();
+
+            // Position window at bottom center of screen
+            if let Some(window) = app.get_webview_window("main") {
+                if let Some(monitor) = window.current_monitor().ok().flatten() {
+                    let screen_size = monitor.size();
+                    let screen_position = monitor.position();
+                    let window_size = window.outer_size().unwrap_or_default();
+                    let scale_factor = monitor.scale_factor();
+
+                    let padding_bottom = (40.0 * scale_factor) as i32; // 40px padding from bottom
+                    
+                    let x = screen_position.x + (screen_size.width as i32 - window_size.width as i32) / 2;
+                    let y = screen_position.y + screen_size.height as i32 - window_size.height as i32 - padding_bottom;
+                    
+                    let _ = window.set_position(PhysicalPosition::new(x, y));
+                }
+                let _ = window.set_ignore_cursor_events(true);
+                let _ = window.show();
+            }
 
             // Poll keyboard state in a loop
             thread::spawn(move || {
