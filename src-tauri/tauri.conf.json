@@ -39,8 +39,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "macOS": {
-      "entitlements": null
-    }
+    "macOS": {}
+    
   }
 }

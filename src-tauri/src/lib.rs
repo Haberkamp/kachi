@@ -3,7 +3,12 @@ use serde::Serialize;
 use std::collections::HashSet;
 use std::thread;
 use std::time::Duration;
-use tauri::{Emitter, Manager, PhysicalPosition};
+use tauri::{
+    Emitter, Manager, PhysicalPosition,
+    menu::{IconMenuItem, Menu, NativeIcon},
+    tray::TrayIconBuilder,
+    ActivationPolicy,
+};
 
 #[derive(Clone, Serialize)]
 struct KeyEvent {
@@ -141,6 +146,30 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let app_handle = app.handle().clone();
+
+            // Create system tray with quit menu
+            let quit = IconMenuItem::with_id_and_native_icon(
+                app,
+                "quit",
+                "Quit application",
+                true,
+                Some(NativeIcon::StopProgress),
+                None::<&str>,
+            )?;
+            let menu = Menu::with_items(app, &[&quit])?;
+
+            TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .on_menu_event(|app, event| {
+                    if event.id.as_ref() == "quit" {
+                        app.exit(0);
+                    }
+                })
+                .build(app)?;
+
+            // Hide from dock (run as background app)
+            app.set_activation_policy(ActivationPolicy::Accessory);
 
             // Position window at bottom center of screen
             if let Some(window) = app.get_webview_window("main") {
