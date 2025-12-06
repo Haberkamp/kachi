@@ -11,7 +11,7 @@ struct KeyEvent {
     event_type: String, // "press" or "release"
 }
 
-fn keycode_to_string(key: &Keycode) -> String {
+fn keycode_to_string(key: &Keycode, uppercase: bool) -> String {
     match key {
         // Modifiers
         Keycode::LAlt | Keycode::RAlt => "⌥".to_string(),
@@ -54,32 +54,32 @@ fn keycode_to_string(key: &Keycode) -> String {
         Keycode::Insert => "Ins".to_string(),
 
         // Letters
-        Keycode::A => "A".to_string(),
-        Keycode::B => "B".to_string(),
-        Keycode::C => "C".to_string(),
-        Keycode::D => "D".to_string(),
-        Keycode::E => "E".to_string(),
-        Keycode::F => "F".to_string(),
-        Keycode::G => "G".to_string(),
-        Keycode::H => "H".to_string(),
-        Keycode::I => "I".to_string(),
-        Keycode::J => "J".to_string(),
-        Keycode::K => "K".to_string(),
-        Keycode::L => "L".to_string(),
-        Keycode::M => "M".to_string(),
-        Keycode::N => "N".to_string(),
-        Keycode::O => "O".to_string(),
-        Keycode::P => "P".to_string(),
-        Keycode::Q => "Q".to_string(),
-        Keycode::R => "R".to_string(),
-        Keycode::S => "S".to_string(),
-        Keycode::T => "T".to_string(),
-        Keycode::U => "U".to_string(),
-        Keycode::V => "V".to_string(),
-        Keycode::W => "W".to_string(),
-        Keycode::X => "X".to_string(),
-        Keycode::Y => "Y".to_string(),
-        Keycode::Z => "Z".to_string(),
+        Keycode::A => if uppercase { "A" } else { "a" }.to_string(),
+        Keycode::B => if uppercase { "B" } else { "b" }.to_string(),
+        Keycode::C => if uppercase { "C" } else { "c" }.to_string(),
+        Keycode::D => if uppercase { "D" } else { "d" }.to_string(),
+        Keycode::E => if uppercase { "E" } else { "e" }.to_string(),
+        Keycode::F => if uppercase { "F" } else { "f" }.to_string(),
+        Keycode::G => if uppercase { "G" } else { "g" }.to_string(),
+        Keycode::H => if uppercase { "H" } else { "h" }.to_string(),
+        Keycode::I => if uppercase { "I" } else { "i" }.to_string(),
+        Keycode::J => if uppercase { "J" } else { "j" }.to_string(),
+        Keycode::K => if uppercase { "K" } else { "k" }.to_string(),
+        Keycode::L => if uppercase { "L" } else { "l" }.to_string(),
+        Keycode::M => if uppercase { "M" } else { "m" }.to_string(),
+        Keycode::N => if uppercase { "N" } else { "n" }.to_string(),
+        Keycode::O => if uppercase { "O" } else { "o" }.to_string(),
+        Keycode::P => if uppercase { "P" } else { "p" }.to_string(),
+        Keycode::Q => if uppercase { "Q" } else { "q" }.to_string(),
+        Keycode::R => if uppercase { "R" } else { "r" }.to_string(),
+        Keycode::S => if uppercase { "S" } else { "s" }.to_string(),
+        Keycode::T => if uppercase { "T" } else { "t" }.to_string(),
+        Keycode::U => if uppercase { "U" } else { "u" }.to_string(),
+        Keycode::V => if uppercase { "V" } else { "v" }.to_string(),
+        Keycode::W => if uppercase { "W" } else { "w" }.to_string(),
+        Keycode::X => if uppercase { "X" } else { "x" }.to_string(),
+        Keycode::Y => if uppercase { "Y" } else { "y" }.to_string(),
+        Keycode::Z => if uppercase { "Z" } else { "z" }.to_string(),
 
         // Numbers
         Keycode::Key0 => "0".to_string(),
@@ -165,14 +165,27 @@ pub fn run() {
             thread::spawn(move || {
                 let device_state = DeviceState::new();
                 let mut prev_keys: HashSet<Keycode> = HashSet::new();
+                let mut caps_lock_on = false;
 
                 loop {
                     let keys: HashSet<Keycode> = device_state.get_keys().into_iter().collect();
 
+                    // Toggle CapsLock state when CapsLock is newly pressed
+                    let caps_lock_pressed = keys.contains(&Keycode::CapsLock) && !prev_keys.contains(&Keycode::CapsLock);
+                    if caps_lock_pressed {
+                        caps_lock_on = !caps_lock_on;
+                    }
+
+                    // Check if Shift is held
+                    let shift_held = keys.contains(&Keycode::LShift) || keys.contains(&Keycode::RShift);
+
+                    // On macOS: Shift + CapsLock = uppercase (not toggled back to lowercase)
+                    let uppercase = shift_held || caps_lock_on;
+
                     // Detect newly pressed keys
                     for key in keys.difference(&prev_keys) {
                         let key_event = KeyEvent {
-                            key: keycode_to_string(key),
+                            key: keycode_to_string(key, uppercase),
                             event_type: "press".to_string(),
                         };
                         let _ = app_handle.emit("key-event", key_event);
@@ -181,7 +194,7 @@ pub fn run() {
                     // Detect released keys
                     for key in prev_keys.difference(&keys) {
                         let key_event = KeyEvent {
-                            key: keycode_to_string(key),
+                            key: keycode_to_string(key, uppercase),
                             event_type: "release".to_string(),
                         };
                         let _ = app_handle.emit("key-event", key_event);
