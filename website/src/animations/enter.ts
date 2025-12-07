@@ -12,13 +12,14 @@ export function initEnterAnimation() {
   elements.forEach((el) => {
     (el as HTMLElement).style.opacity = "0";
     (el as HTMLElement).style.transform = "translateY(24px)";
+    (el as HTMLElement).style.filter = "blur(12px)";
   });
 
   return new Promise<void>((resolve) => {
     setTimeout(() => {
       animate(
         elements,
-        { opacity: 1, transform: "translateY(0px)" },
+        { opacity: 1, transform: "translateY(0px)", filter: "blur(0px)" },
         {
           delay: stagger(STAGGER_DELAY),
           type: "spring",
