@@ -43,13 +43,13 @@ import "../fonts.css";
 
 				<div data-enter class="relative inline-block" id="button-wrapper">
 					<canvas id="button-canvas" class="absolute inset-0 pointer-events-none"></canvas>
-					<button id="download-btn" class="relative z-10 select-none text-white mix-blend-difference bg-transparent px-4 min-h-12 cursor-pointer focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4 focus-visible:active:bg-black focus-visible:active:text-white focus-visible:active:mix-blend-normal flex flex-row-reverse items-center gap-2">
+					<a id="download-btn" href="https://github.com/Haberkamp/kachi/releases" class="relative z-10 select-none text-white mix-blend-difference bg-transparent px-4 min-h-12 cursor-pointer focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4 focus-visible:active:bg-black focus-visible:active:text-white focus-visible:active:mix-blend-normal flex flex-row-reverse items-center gap-2">
 						<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M11 5C11 4.44772 11.4477 4 12 4C12.5523 4 13 4.44772 13 5V12.1578L16.2428 8.91501L17.657 10.3292L12.0001 15.9861L6.34326 10.3292L7.75748 8.91501L11 12.1575V5Z" fill="currentColor" />
 							<path d="M4 14H6V18H18V14H20V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V14Z" fill="currentColor" />
 						</svg>
 						Download for macOS
-					</button>
+					</a>
 				</div>
 			</div>
 		</div>
@@ -73,7 +73,7 @@ import "../fonts.css";
 
 			// Ripple button animation
 			const canvas = document.getElementById("button-canvas") as HTMLCanvasElement;
-			const button = document.getElementById("download-btn") as HTMLButtonElement;
+			const button = document.getElementById("download-btn") as HTMLAnchorElement;
 			const ctx = canvas.getContext("2d")!;
 
 			const CELL_SIZE = 10;
