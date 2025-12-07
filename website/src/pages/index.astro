@@ -1,5 +1,6 @@
 ---
 import "../styles.css";
+import "../fonts.css";
 ---
 
 <html lang="en">
@@ -17,7 +18,7 @@ import "../styles.css";
 			content="Kachi is a tool that allows you to visually display your keystrokes in real time."
 		/>
 	</head>
-	<body class="bg-black">
+	<body class="bg-black selection:bg-white selection:text-black">
 		<div class="relative h-screen w-screen overflow-hidden">
 			<video
 				id="hero-video"
@@ -29,17 +30,17 @@ import "../styles.css";
 			></video>
 
 			<div class="absolute z-10 left-8 md:left-32 bottom-12 md:bottom-24">
-				<h1 class="text-white text-6xl font-bold leading-[1.1]">Kachi</h1>
+				<h1 class="text-white text-6xl font-light leading-[1.1]">Kachi</h1>
 
 				<div class="pt-2" />
 
-				<p class="text-white text-lg leading-[1.3]">
+				<p class="text-white text-lg leading-[1.3] font-light">
 					Visually display your keystrokes in real time.
 				</p>
 
 				<div class="pt-8" />
 
-				<button class="text-black bg-white px-4 min-h-12 cursor-pointer focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4">
+				<button class="hover:bg-black hover:text-white select-none text-black bg-white px-4 min-h-12 cursor-pointer focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4">
 					Download for macOS
 				</button>
 			</div>
