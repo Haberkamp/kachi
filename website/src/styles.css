@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+    --font-sans: "Geist", sans-serif;
+}
+
+@utility container {
+  @apply px-4 mx-auto;
+}
