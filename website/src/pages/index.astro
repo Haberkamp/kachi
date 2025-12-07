@@ -41,9 +41,16 @@ import "../fonts.css";
 
 				<div class="pt-8" />
 
-				<button class="hover:bg-black hover:text-white select-none text-black bg-white px-4 min-h-12 cursor-pointer focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4">
-					Download for macOS
-				</button>
+				<div class="relative inline-block" id="button-wrapper">
+					<canvas id="button-canvas" class="absolute inset-0 pointer-events-none"></canvas>
+					<button id="download-btn" class="relative z-10 select-none text-white mix-blend-difference bg-transparent px-4 min-h-12 cursor-pointer focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4 focus-visible:active:bg-black focus-visible:active:text-white focus-visible:active:mix-blend-normal flex flex-row-reverse items-center gap-2">
+						<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M11 5C11 4.44772 11.4477 4 12 4C12.5523 4 13 4.44772 13 5V12.1578L16.2428 8.91501L17.657 10.3292L12.0001 15.9861L6.34326 10.3292L7.75748 8.91501L11 12.1575V5Z" fill="currentColor" />
+							<path d="M4 14H6V18H18V14H20V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V14Z" fill="currentColor" />
+						</svg>
+						Download for macOS
+					</button>
+				</div>
 			</div>
 		</div>
 		<script>
@@ -52,6 +59,137 @@ import "../fonts.css";
 				video.classList.remove("opacity-0");
 				video.classList.add("opacity-100");
 			});
+
+			// Ripple button animation
+			const canvas = document.getElementById("button-canvas") as HTMLCanvasElement;
+			const button = document.getElementById("download-btn") as HTMLButtonElement;
+			const ctx = canvas.getContext("2d")!;
+
+			const CELL_SIZE = 10;
+			let cols = 0;
+			let rows = 0;
+			let cells: number[][] = []; // 0 = white, 1 = black
+			let targetCells: number[][] = [];
+			let animationFrame: number | null = null;
+			let isHovered = false;
+			let rippleGeneration = 0;
+
+			function resizeCanvas() {
+				const rect = button.getBoundingClientRect();
+				canvas.width = rect.width;
+				canvas.height = rect.height;
+				cols = Math.ceil(rect.width / CELL_SIZE);
+				rows = Math.ceil(rect.height / CELL_SIZE);
+				
+				// Initialize cells to white (0)
+				cells = Array.from({ length: rows }, () => Array(cols).fill(0));
+				targetCells = Array.from({ length: rows }, () => Array(cols).fill(0));
+				draw();
+			}
+
+			function draw() {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				for (let r = 0; r < rows; r++) {
+					for (let c = 0; c < cols; c++) {
+						const value = cells[r][c];
+						const gray = Math.round(255 * (1 - value));
+						ctx.fillStyle = `rgb(${gray}, ${gray}, ${gray})`;
+						ctx.fillRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+					}
+				}
+			}
+
+			function animate() {
+				let needsUpdate = false;
+				const speed = 0.15;
+
+				for (let r = 0; r < rows; r++) {
+					for (let c = 0; c < cols; c++) {
+						const target = targetCells[r][c];
+						if (Math.abs(cells[r][c] - target) > 0.01) {
+							cells[r][c] += (target - cells[r][c]) * speed;
+							needsUpdate = true;
+						} else {
+							cells[r][c] = target;
+						}
+					}
+				}
+
+				draw();
+
+				if (needsUpdate) {
+					animationFrame = requestAnimationFrame(animate);
+				} else {
+					animationFrame = null;
+				}
+			}
+
+			function startAnimation() {
+				if (!animationFrame) {
+					animationFrame = requestAnimationFrame(animate);
+				}
+			}
+
+			function triggerRipple(mouseX: number, mouseY: number) {
+				const rect = button.getBoundingClientRect();
+				const x = mouseX - rect.left;
+				const y = mouseY - rect.top;
+				const startCol = Math.floor(x / CELL_SIZE);
+				const startRow = Math.floor(y / CELL_SIZE);
+
+				// Calculate max distance for delay scaling
+				const maxDist = Math.sqrt(cols * cols + rows * rows);
+				const currentGeneration = rippleGeneration;
+
+				for (let r = 0; r < rows; r++) {
+					for (let c = 0; c < cols; c++) {
+						const dist = Math.sqrt((c - startCol) ** 2 + (r - startRow) ** 2);
+						const delay = (dist / maxDist) * 350; // max 600ms delay
+
+						setTimeout(() => {
+							// Ignore if this ripple generation is stale
+							if (currentGeneration !== rippleGeneration) return;
+							if (isHovered) {
+								targetCells[r][c] = 1;
+								startAnimation();
+							}
+						}, delay);
+					}
+				}
+			}
+
+			function resetCells() {
+				// Instant reset - all cells turn white at once
+				for (let r = 0; r < rows; r++) {
+					for (let c = 0; c < cols; c++) {
+						targetCells[r][c] = 0;
+					}
+				}
+				startAnimation();
+			}
+
+			button.addEventListener("mouseenter", (e) => {
+				rippleGeneration++;
+				isHovered = true;
+				triggerRipple(e.clientX, e.clientY);
+			});
+
+			button.addEventListener("mousemove", (e) => {
+				if (isHovered) {
+					// Continue ripple from new position
+					triggerRipple(e.clientX, e.clientY);
+				}
+			});
+
+			button.addEventListener("mouseleave", () => {
+				rippleGeneration++;
+				isHovered = false;
+				resetCells();
+			});
+
+			// Initialize
+			resizeCanvas();
+			window.addEventListener("resize", resizeCanvas);
 		</script>
 	</body>
 </html>
