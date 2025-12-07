@@ -82,6 +82,12 @@ import "../fonts.css";
 			let touchExitTimeout: number | null = null;
 			const TOUCH_MIN_BLACK_DURATION = 300;
 
+			// Keyboard-specific state
+			let keyboardPressed = false;
+			let keyboardRippleProgress = 0; // 0 = fully white, 1 = fully black
+			let keyboardAnimationFrame: number | null = null;
+			let keyboardMaxDist = 0;
+
 			function resizeCanvas() {
 				const rect = button.getBoundingClientRect();
 				canvas.width = rect.width;
@@ -299,6 +305,76 @@ import "../fonts.css";
 				touchFullyBlackTime = null;
 				triggerTouchRipple(touch.clientX, touch.clientY);
 			}, { passive: true });
+
+			// Keyboard animation functions
+			function updateKeyboardRipple() {
+				const centerCol = (cols - 1) / 2;
+				const centerRow = (rows - 1) / 2;
+				keyboardMaxDist = Math.sqrt(centerCol * centerCol + centerRow * centerRow);
+				
+				// Current ripple radius based on progress
+				const currentRadius = keyboardRippleProgress * keyboardMaxDist;
+
+				for (let r = 0; r < rows; r++) {
+					for (let c = 0; c < cols; c++) {
+						const dist = Math.sqrt((c - centerCol) ** 2 + (r - centerRow) ** 2);
+						// Cell is black if within current ripple radius
+						targetCells[r][c] = dist <= currentRadius ? 1 : 0;
+					}
+				}
+				startAnimation();
+			}
+
+			function animateKeyboardRipple() {
+				const speed = 0.04; // Same speed for enter and exit
+				let targetProgress = keyboardPressed ? 1 : 0;
+
+				if (Math.abs(keyboardRippleProgress - targetProgress) > 0.01) {
+					if (keyboardPressed) {
+						keyboardRippleProgress += speed;
+						if (keyboardRippleProgress > 1) keyboardRippleProgress = 1;
+					} else {
+						keyboardRippleProgress -= speed;
+						if (keyboardRippleProgress < 0) keyboardRippleProgress = 0;
+					}
+					updateKeyboardRipple();
+					keyboardAnimationFrame = requestAnimationFrame(animateKeyboardRipple);
+				} else {
+					keyboardRippleProgress = targetProgress;
+					updateKeyboardRipple();
+					keyboardAnimationFrame = null;
+				}
+			}
+
+			function startKeyboardAnimation() {
+				if (!keyboardAnimationFrame) {
+					keyboardAnimationFrame = requestAnimationFrame(animateKeyboardRipple);
+				}
+			}
+
+			button.addEventListener("keydown", (e) => {
+				if (e.key !== "Enter" && e.key !== " ") return;
+				if (e.repeat) return; // Ignore key repeat
+				
+				e.preventDefault();
+				keyboardPressed = true;
+				startKeyboardAnimation();
+			});
+
+			button.addEventListener("keyup", (e) => {
+				if (e.key !== "Enter" && e.key !== " ") return;
+				
+				keyboardPressed = false;
+				startKeyboardAnimation();
+			});
+
+			// Handle blur - treat as key release
+			button.addEventListener("blur", () => {
+				if (keyboardPressed) {
+					keyboardPressed = false;
+					startKeyboardAnimation();
+				}
+			});
 
 			// Prevent mouse events from firing on touch devices
 			button.addEventListener("mouseenter", (e) => {
